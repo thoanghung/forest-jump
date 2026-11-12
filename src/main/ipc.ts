@@ -22,12 +22,35 @@ export function registerIpc(win: () => BrowserWindow | null, config: ConfigStore
   pm.on('update', (run: RunInfo) => send('run:update', run))
   pm.on('removed', (id: string) => send('run:removed', id))
 
+  /** Stop (and drop) runs of a project whose worktree was removed or whose directory is gone. */
+  const stopRemovedRuns = (projectId: string, worktrees: Worktree[]): void => {
+    const live = new Set(worktrees.filter((w) => w.exists).map((w) => w.path))
+    for (const r of pm.list()) {
+      if (r.projectId !== projectId || live.has(r.worktreePath)) continue
+      if (pm.isActive(r.id)) void pm.stop(r.id).then(() => pm.clear(r.id))
+      else pm.clear(r.id)
+    }
+  }
+
   // ---- worktree watching: notify the renderer when worktrees are added/removed/switch branch
   const watchers = new Map<string, FSWatcher>()
   const timers = new Map<string, NodeJS.Timeout>()
   const notify = (projectId: string): void => {
     clearTimeout(timers.get(projectId))
-    timers.set(projectId, setTimeout(() => send('worktrees:changed', projectId), 700))
+    timers.set(
+      projectId,
+      setTimeout(() => {
+        send('worktrees:changed', projectId)
+        // Don't rely on the renderer refreshing: reap runs of removed worktrees here too.
+        void (async () => {
+          try {
+            stopRemovedRuns(projectId, await listWorktrees(config.project(projectId).repoPath))
+          } catch {
+            /* repo unreadable or project removed: leave runs alone */
+          }
+        })()
+      }, 700)
+    )
   }
   const syncWatchers = async (): Promise<void> => {
     const projects = config.get().projects
@@ -92,7 +115,9 @@ export function registerIpc(win: () => BrowserWindow | null, config: ConfigStore
   ipcMain.handle('worktrees:list', async (_e, projectId: string): Promise<WorktreeList> => {
     try {
       const p = config.project(projectId)
-      return { projectId, worktrees: await listWorktrees(p.repoPath), error: null }
+      const worktrees = await listWorktrees(p.repoPath)
+      stopRemovedRuns(projectId, worktrees)
+      return { projectId, worktrees, error: null }
     } catch (err) {
       return { projectId, worktrees: [], error: err instanceof Error ? err.message : String(err) }
     }
