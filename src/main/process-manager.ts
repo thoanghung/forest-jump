@@ -150,6 +150,9 @@ export class ProcessManager extends EventEmitter {
       this.flush()
       this.emit('update', { ...info })
       resolveExit()
+      // Stopped (or finished cleanly) → drop the run and its log tab. Crashed runs stay so the
+      // error output can still be read.
+      if (info.status === 'exited' && this.runs.get(opts.id) === run) this.clear(opts.id)
     })
 
     if (opts.port != null) {

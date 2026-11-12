@@ -61,13 +61,14 @@ export default function App() {
         // A finished setup (install) changes the worktree's warnings.
         if (run.kind === 'setup' && (run.status === 'exited' || run.status === 'crashed')) void refresh(run.projectId)
       }),
-      api.onRunRemoved((id) =>
+      api.onRunRemoved((id) => {
         setRuns((r) => {
           const n = { ...r }
           delete n[id]
           return n
         })
-      ),
+        setActiveLog((a) => (a === id ? null : a))
+      }),
       api.onWorktreesChanged((projectId) => void refresh(projectId))
     ]
     const onFocus = (): void => refreshAll()

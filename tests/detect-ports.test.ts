@@ -52,3 +52,22 @@ describe('childEnv', () => {
     delete process.env.ELECTRON_RUN_AS_NODE
   })
 })
+
+describe('ProcessManager run cleanup', () => {
+  it('removes a stopped run but keeps a crashed one', async () => {
+    const { ProcessManager } = await import('../src/main/process-manager')
+    const pm = new ProcessManager()
+    const removed: string[] = []
+    pm.on('removed', (id: string) => removed.push(id))
+    const base = { projectId: 'p', label: 'x', kind: 'dev' as const, port: null, env: {}, worktreePath: process.cwd() }
+
+    pm.start({ ...base, id: 'stopped', command: 'sleep 30' })
+    pm.start({ ...base, id: 'crashed', command: 'exit 3' })
+    await pm.stop('stopped')
+    await new Promise((r) => setTimeout(r, 1500))
+
+    expect(removed).toEqual(['stopped'])
+    expect(pm.get('stopped')).toBeUndefined()
+    expect(pm.get('crashed')?.status).toBe('crashed')
+  }, 15000)
+})
