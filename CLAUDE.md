@@ -45,6 +45,7 @@ Three Electron processes, wired by electron-vite (`electron.vite.config.ts`):
 
 ## Notes
 
+- "Open in editor/terminal" (`src/main/launch.ts`) spawns the configured command without a shell; `{path}` is substituted per argument after quote-aware splitting.
 - `sandbox: false` in `BrowserWindow` is required because the preload is bundled as CJS with Node imports.
 - `node-pty` is externalized and must be `asarUnpack`ed (see `build` in `package.json`); after changing the Electron version run `pnpm rebuild`.
 - `tests/worktrees.test.ts` creates real git repos in a temp dir, so `git` must be on PATH.

@@ -1,4 +1,3 @@
-import { spawn } from 'node:child_process'
 import { BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { watch, type FSWatcher } from 'chokidar'
 import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
@@ -8,22 +7,10 @@ import type { ConfigStore } from './config'
 import { copyEnvFiles } from './bootstrap'
 import { detectPackageManager, detectProject, installCommand } from './detect'
 import { loadWorktreeEnv, portFromEnv, safeEnvName } from './env-files'
+import { launch } from './launch'
 import { isPortFree } from './ports'
 import type { ProcessManager } from './process-manager'
 import { envFiles, gitCommonDir, listWorktrees } from './worktrees'
-
-/** Run a user-configured command line (e.g. "code" or "code -n") without a shell. */
-function launch(commandLine: string, args: string[], cwd: string): Promise<void> {
-  const [cmd, ...rest] = commandLine.trim().split(/\s+/)
-  return new Promise((resolve, reject) => {
-    const child = spawn(cmd, [...rest, ...args], { cwd, detached: true, stdio: 'ignore' })
-    child.once('error', reject)
-    child.once('spawn', () => {
-      child.unref()
-      resolve()
-    })
-  })
-}
 
 export function registerIpc(win: () => BrowserWindow | null, config: ConfigStore, pm: ProcessManager): () => void {
   const send = (channel: string, ...args: unknown[]): void => {
@@ -221,10 +208,10 @@ export function registerIpc(win: () => BrowserWindow | null, config: ConfigStore
   ipcMain.on('run:resize', (_e, id: string, cols: number, rows: number) => pm.resize(id, cols, rows))
 
   // ---- open helpers
-  ipcMain.handle('open:editor', (_e, path: string) =>
-    launch(config.get().settings.editorCommand, [path], path)
-  )
-  ipcMain.handle('open:terminal', (_e, path: string) => launch(config.get().settings.terminalCommand, [], path))
+  // `{path}` in these commands is replaced by the worktree path; without it the editor gets the
+  // path appended and the terminal just starts with cwd = worktree.
+  ipcMain.handle('open:editor', (_e, path: string) => launch(config.get().settings.editorCommand, path, true))
+  ipcMain.handle('open:terminal', (_e, path: string) => launch(config.get().settings.terminalCommand, path, false))
   ipcMain.handle('open:folder', async (_e, path: string) => {
     const err = await shell.openPath(path)
     if (err) throw new Error(err)

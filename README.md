@@ -22,7 +22,7 @@ pnpm dist         # build AppImage + .deb into dist/
 
 Commands run through your login shell (`$SHELL -ilc`), so nvm/pnpm from your shell rc are on `PATH`. Stop kills the whole process group (Metro workers, `nest --watch` children); quitting the app stops everything.
 
-Config lives in `~/.config/forest-jump/config.json`; editor/terminal commands are in ⚙ Settings. Projects added under the old name (`~/.config/env-control/`) are copied over on first start.
+Config lives in `~/.config/forest-jump/config.json`. Editor/terminal commands are in ⚙ Settings; `{path}` in them is replaced by the worktree path (e.g. `wezterm start --new-tab --cwd {path} -- nvim {path}`), and without it the editor gets the path appended. Projects added under the old name (`~/.config/env-control/`) are copied over on first start.
 
 ## Layout
 

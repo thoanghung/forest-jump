@@ -61,9 +61,14 @@
         "deb"
       ],
       "category": "Development",
-      "executableName": "forest-jump"
-    }
+      "executableName": "forest-jump",
+      "maintainer": "thoanghung",
+      "syncDesktopName": true,
+      "synopsis": "Jump between git worktrees and run their dev env"
+    },
+    "artifactName": "${name}-${version}-${arch}.${ext}"
   },
   "author": "forest-jump",
-  "productName": "Forest Jump"
+  "productName": "Forest Jump",
+  "desktopName": "forest-jump.desktop"
 }

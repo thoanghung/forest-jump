@@ -22,9 +22,9 @@ export interface EnvFileList {
 }
 
 export interface Settings {
-  /** Command used for "Open in editor"; the worktree path is appended. */
+  /** Command for "Open in editor". `{path}` = worktree path; without it the path is appended. */
   editorCommand: string
-  /** Command used for "Open terminal"; started with the worktree as cwd. */
+  /** Command for "Open terminal", started with cwd = worktree. `{path}` = worktree path. */
   terminalCommand: string
 }
 

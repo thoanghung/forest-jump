@@ -15,18 +15,25 @@ export default function SettingsDialog({ settings, onSave, onClose }: Props) {
     <div className="modal-backdrop" onMouseDown={onClose}>
       <div className="modal" onMouseDown={(e) => e.stopPropagation()}>
         <h2>Settings</h2>
+        <p className="muted small">
+          <code>{'{path}'}</code> is replaced by the worktree path. Both commands start with the worktree as working
+          directory. Quote arguments with spaces.
+        </p>
         <label>
-          Editor command <span className="muted">— worktree path is appended</span>
+          Editor command <span className="muted">— without <code>{'{path}'}</code> the path is appended</span>
         </label>
-        <input className="mono" value={editor} onChange={(e) => setEditor(e.target.value)} placeholder="code" />
-        <label>
-          Terminal command <span className="muted">— started inside the worktree</span>
-        </label>
+        <input
+          className="mono"
+          value={editor}
+          onChange={(e) => setEditor(e.target.value)}
+          placeholder="code   or   wezterm start --new-tab --cwd {path} -- nvim {path}"
+        />
+        <label>Terminal command</label>
         <input
           className="mono"
           value={terminal}
           onChange={(e) => setTerminal(e.target.value)}
-          placeholder="x-terminal-emulator"
+          placeholder="x-terminal-emulator   or   wezterm start --new-tab --cwd {path}"
         />
         <div className="modal-actions">
           <span className="spacer" />
